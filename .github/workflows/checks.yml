@@ -1,0 +1,54 @@
+name: Checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Windows / Python ${{ matrix.python }}
+    runs-on: windows-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.9', '3.13']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Check Python syntax
+        run: python -m py_compile campus_core.py windows_support.py campus_login.py
+      - name: Run offline Windows tests
+        run: python -X utf8 -m unittest discover -s tests -v
+
+  android-protocol:
+    name: Android / JVM protocol tests
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Download and verify JVM test dependency
+        shell: pwsh
+        run: |
+          $dependencyDir = Join-Path $env:RUNNER_TEMP 'ahu-protocol-deps'
+          New-Item -ItemType Directory -Force -Path $dependencyDir | Out-Null
+          $jarPath = Join-Path $dependencyDir 'json-20240303.jar'
+          Invoke-WebRequest -Uri 'https://repo.maven.apache.org/maven2/org/json/json/20240303/json-20240303.jar' -OutFile $jarPath
+          $expected = '3cf6cd6892e32e2b4c1c39e0f52f5248a2f5b37646fdfbb79a66b46b618414ed'
+          if ((Get-FileHash -LiteralPath $jarPath -Algorithm SHA256).Hash -ne $expected) {
+            throw 'The JSON test dependency checksum does not match.'
+          }
+          "AHU_JSON_JAR=$jarPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Run offline protocol tests
+        shell: pwsh
+        run: ./android/test-protocol.ps1 -JavaHome $env:JAVA_HOME -JsonJar $env:AHU_JSON_JAR

@@ -1,0 +1,45 @@
+# Local credentials, logs and captured campus pages
+/data/
+/research/
+/portal-*
+*.log
+.env
+.env.*
+!.env.example
+
+# Python caches and virtual environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Android SDK, build output and machine-specific configuration
+/android/.tooling/
+/android/.signing/
+.gradle/
+/android/build/
+/android/app/build/
+/android/local.properties
+/android/output/
+/sdk-repository.xml
+*.apk
+*.aab
+*.idsig
+
+# Signing credentials (also protect keys saved outside .signing)
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.pem
+*.key
+
+# Local IDE, agent and operating-system files
+.idea/
+.vscode/
+.codex/
+.agents/
+.DS_Store
+Thumbs.db
+Desktop.ini
